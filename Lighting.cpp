@@ -82,8 +82,8 @@ public:
 
             pair<int, int> mpos = { -1, -1 };
             int illuminated = -1;
-            for (int y = max(0, s/2-nd); y < min(ns, s/2+nd); ++y) {
-                for (int x = max(0, s/2-nd); x < min(ns, s/2+nd); ++x) {
+            for (int y = max(0, ns/2-nd/2); y < min(ns, ns/2+nd/2); ++y) {
+                for (int x = max(0, ns/2-nd/2); x < min(ns, ns/2+nd/2); ++x) {
 
                     if (field[y][x] == Wall) {
                         x += P-1;
