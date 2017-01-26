@@ -13,6 +13,47 @@
 
 using namespace std;
 
+// const int MAX_S = 50;
+// const int MAX_L = 20;
+
+// class Node {
+// public:
+//
+//     int field[MAX_S][MAX_S];
+//     Node parent;
+//     string output;
+//     int score;
+//
+//     Node() {
+//         memset(field, 0, sizeof(field));
+//         score = 0;
+//     }
+//
+//     // 比較用
+//     bool operator<(const Node& n1) const {
+//         return this->score < n1.score;
+//     }
+//
+// };
+//
+// class Player {
+// public:
+//
+//     const int SEARCH_DEPTH = MAX_L; // Lターン読む
+//
+//     // 探索
+//     Node search(Node now) {
+//
+//     }
+//
+//     // 評価
+//     int eval(Node next) {
+//
+//     }
+//
+//
+// };
+
 class Lighting {
 public:
     vector<string> setLights(vector<string> map, int D, int L) {
@@ -39,10 +80,10 @@ public:
         // ライトを置く場所を一つ決める
         for (int i = 0; i < L; ++i) {
 
-            pair<int, int> mpos;
+            pair<int, int> mpos = { -1, -1 };
             int illuminated = -1;
-            for (int y = 0; y < ns; ++y) {
-                for (int x = 0; x < ns; ++x) {
+            for (int y = max(0, ns/2-nd/2); y < min(ns, ns/2+nd/2); ++y) {
+                for (int x = max(0, ns/2-nd/2); x < min(ns, ns/2+nd/2); ++x) {
 
                     if (field[y][x] == Wall) {
                         x += P-1;
@@ -52,7 +93,7 @@ public:
                     pair<double, double> l_pos = getCellCenter(y, x);   // ライト置く場所（中心）をとりあえずここにする
 
                     int t = getIlluminatedCells(l_pos);
-                    if (illuminated < t) {
+                    if (illuminated < t && t > 0) {
                         illuminated = t;
                         mpos = { y, x };
                     }
@@ -64,8 +105,27 @@ public:
 
             // 整形
             string Y = "", X ="";
-            Y += to_string(mpos.first/(double)P);
-            X += to_string(mpos.second/(double)P);
+            if (mpos.first == -1.0 || mpos.second == -1.0 || field[mpos.first][mpos.second] == Wall) {
+                bool update = true;
+
+                while (update) {
+                    update = false;
+                    X += to_string(randS(mt) % S) + "." + to_string(randS(mt) % 90 + 10);
+                    Y += to_string(randS(mt) % S) + "." + to_string(randS(mt) % 90 + 10);
+
+                    int tx = atol(X.c_str()), ty = atol(Y.c_str());
+                    if (field[ty][tx] == Wall) {
+                        update = true;
+                        X = "";
+                        Y = "";
+                    }
+                }
+            }
+            else {
+                pair<double, double> t = getCellCenter(mpos);
+                Y += to_string(t.first);
+                X += to_string(t.second);
+            }
 
             bool f=false; int p=0, id=0;
             for (int i=0;i<X.size();++i) {
@@ -92,8 +152,6 @@ public:
                 }
             }
             for (int i=id; i<2; ++i) Y += "0";
-
-            // TODO: 失敗したときに乱数で適当に生成するのをやる
 
             bool ok=false;
             int c=0;
@@ -132,7 +190,7 @@ public:
 
 
             //ret.push_back(X.substr(0, p+3) + " " + Y.substr(0, p2+3));
-            //cerr << X << " " << Y << endl;
+            //cerr << "a = " << XX << " " << YY << "(" << X << ", " << Y << ") = " << field[(int)atol(YY.c_str())][(int)atol(XX.c_str())] << "(" << field[(int)atol(Y.c_str())][(int)atol(X.c_str())] << ")"  << endl;
             ret.push_back(XX + " " + YY);
         }
 
@@ -161,8 +219,11 @@ private:
     void initFieldMini(const vector<string>& map);  //
 
     pair<double, double> getCellCenter(const int y, const int x);
-    pair<double, double> getCellCenter(const pair<int, int> p) {
+    pair<double, double> getCellCenter(const pair<int, int>& p) {
         return getCellCenter(p.first, p.second);
+    }
+    pair<double, double> getCellCenter(const pair<double, double>& p) {
+        return getCellCenter((int)p.first, (int)p.second);
     }
 
 
@@ -220,7 +281,7 @@ void Lighting::initFieldMini(const vector<string>& map) {
 }
 
 pair<double, double> Lighting::getCellCenter(const int y, const int x) {
-    double c = subcell_length / 2.0;    // subcellの辺の半分
+    double c = cell_length / 2.0;    // subcellの辺の半分
     double a = y+c, b = x+c;
     return { a, b };
 }
@@ -233,7 +294,6 @@ int Lighting::getIlluminatedCells(const pair<double, double>& l) {
     for (int i = max(0, y - nd/2); i < min(ns, y + nd/2); ++i) {
         for (int j = max(0, x - nd/2); j < min(ns, x + nd/2); ++j) {
 
-            if (field[i][j] != Empty) continue;
             if (field[i][j] == Empty && distance(l, getCellCenter(i, j)) <= nd) illuminated++;
 
         }
@@ -248,8 +308,6 @@ void Lighting::onIlluminated(const pair<double, double>& l) {
     // 1辺ndの長さの正方形分、調べる
     for (int i = max(0, y - nd/2); i < min(ns, y + nd/2); ++i) {
         for (int j = max(0, x - nd/2); j < min(ns, x + nd/2); ++j) {
-
-            if (field[i][j] == Wall) continue;
 
             if (field[i][j] == Empty && distance(l, getCellCenter(i, j)) <= nd) field[i][j] = Illuminated;
 
